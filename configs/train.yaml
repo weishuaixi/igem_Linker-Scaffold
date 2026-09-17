@@ -1,0 +1,117 @@
+seed: 42
+
+wandb:
+  project: rna-one-d-model
+  name: scaffold-5090-linker-v5
+  entity:
+  log_model: false
+
+data:
+  train_data: data/processed/rna_linker_v3_training.csv
+  cluster_manifest: data/processed/rna_linker_v3_clusters.tsv
+  cluster_thresholds:
+    min_sequence_identity: 0.8
+    min_bidirectional_coverage: 0.8
+  task: motif_denoising
+  min_motif_length: 4
+  max_motif_length: 30
+  motif_length_buckets:
+    - [4, 8, 0.55]
+    - [9, 15, 0.30]
+    - [16, 30, 0.15]
+  min_flank_length: 10
+  min_total_scaffold_length: 29
+  short_flank_min: 10
+  short_flank_max: 20
+  long_flank_min: 15
+  long_flank_max: 30
+
+  # Match the 16-step inference process and keep enough full-mask starts.
+  full_mask_probability: 0.0
+  span_mask_probability: 0.0
+  iterative_mask_steps: 16
+  iterative_full_mask_probability: 0.35
+  context_noise_probability: 0.05
+  stage_aware_context_noise: true
+  validation_full_mask: true
+
+  # Virtual views change conditioning/masks, never split membership or record counts.
+  train_views_per_record: 4
+  validation_views_per_record: 4
+  test_views_per_record: 4
+  cluster_balanced_sampling: true
+  preferred_motifs: [GCGG]
+  preferred_motif_probability: 0.5
+
+  max_target_length: 100
+  batch_size: 8
+  num_workers: 8
+  val_fraction: 0.07327823691460055
+  test_fraction: 0.0931129476584022
+  expected_partition_counts:
+    train: 2869
+    validation: 252
+    test: 321
+  expected_cluster_count: 1572
+  seed: 42
+
+model:
+  # V5 retains the task architecture/data to isolate the decoding repair.
+  # Self-conditioning is disabled in both training and generation.
+  d_model: 384
+  nhead: 6
+  num_layers: 6
+  dim_feedforward: 1536
+  dropout: 0.1
+  max_length: 100
+  activation_checkpointing: false
+  pretrained:
+    kind: rna_fm
+    checkpoint: .cache/torch/hub/checkpoints/RNA-FM_pretrained.pth
+    expected_checkpoint_sha256: 5b5d7d87b37c291ef42c140ef9edf7aea29f255fa2a4fd435f776c52e93d5e99
+    mode: lora
+    lora_rank: 8
+    lora_alpha: 16.0
+    lora_dropout: 0.05
+    lora_last_n_layers: 4
+  pretrained_fusion: gated
+
+  # Lengths are user constraints, not randomly sampled supervision targets.
+  predict_flank_lengths: false
+  left_length_loss_weight: 0.0
+  right_length_loss_weight: 0.0
+
+  use_conditioning_embeddings: true
+  conditioning_relative_distance_clip: 32
+  denoise_steps: 16
+  self_conditioning_probability: 0.0
+  self_conditioning_validation: false
+  generation_remask_strategy: random
+  composition_loss_weight: 0.02
+  homopolymer_loss_weight: 0.02
+  homopolymer_max_run: 6
+  label_smoothing: 0.02
+  normalize_base_loss_per_sequence: true
+
+  lr: 0.0003
+  lora_lr_multiplier: 0.1
+  weight_decay: 0.05
+  exclude_norm_bias_embedding_from_weight_decay: true
+  warmup_fraction: 0.08
+  min_lr_fraction: 0.05
+
+trainer:
+  checkpoint_dir: checkpoints_scaffold_linker_v5
+  monitor: val/base_loss
+  checkpoint_filename: rna-linker-v5-{epoch:02d}-{val/base_loss:.4f}
+  early_stopping_patience: 8
+  resume_from_checkpoint:
+  args:
+    accelerator: gpu
+    devices: 1
+    precision: bf16-mixed
+    max_epochs: 40
+    gradient_clip_val: 1.0
+    accumulate_grad_batches: 4
+    log_every_n_steps: 10
+    val_check_interval: 1.0
