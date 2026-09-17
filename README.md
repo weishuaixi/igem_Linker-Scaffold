@@ -1,6 +1,14 @@
 # RNA-Linker
 
-RNA-Linker generates RNA sequences around a fixed motif. It is a research tool for proposing short linker and scaffold candidates, with an optional RNAfold workflow for secondary-structure prediction and candidate ranking.
+RNA-Linker is the dry-lab RNA linker and scaffold sequence generator for **iGEM PekingHSC 2026** (HEPHA-RNA). Given a fixed RNA motif, it proposes flanking sequences for Hepha element development. An optional RNAfold workflow predicts secondary structures and ranks the generated candidates.
+
+- Model repository: [PekingHSC-2026-Model](https://github.com/sebaWEI/PekingHSC-2026-Model)
+- Team: [iGEM PekingHSC 2026](https://teams.igem.org/6371)
+- Wiki: [PekingHSC wiki](https://2026.igem.wiki/pekinghsc/)
+- Wiki model page: [Models](https://2026.igem.wiki/pekinghsc/model)
+- Wiki tutorial page: [Documents](https://2026.igem.wiki/pekinghsc/documents)
+
+Each ranked-generation run writes candidates, RNAfold predictions, ranking scores, and a run manifest to the selected output directory, such as `outputs/GCGG_ranked/`. Computational ranking supports candidate selection but still requires wet-lab validation; see [scope and limitations](#scope-and-limitations).
 
 You provide a motif such as `GCGG`. The model generates both flanking sequences while keeping the motif unchanged:
 
