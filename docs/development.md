@@ -1,5 +1,11 @@
 # Development and mathematical methods
 
+## Candidate ranking
+
+The RNAfold workflow ranks a generated pool using seven heuristic components: decoding likelihood (0.25), token confidence (0.20), GC quality (0.20), homopolymer quality (0.15), minimum free energy quality (0.05), paired fraction (0.05), and motif accessibility (0.10).
+
+Each component is min–max normalized within the pool. Energy quality favors energy per nucleotide near −0.3 kcal/mol/nt, not the lowest possible energy. Motif accessibility favors unpaired motif bases. These weights have not been calibrated against functional measurements, and scores cannot be compared across different pools.
+
 [Back to README](../README.md)
 
 Commands below run from the repository root.
@@ -37,4 +43,3 @@ Training uses AdamW with task learning rate `3e-4`, LoRA learning-rate multiplie
 A training-view audit showed mean maximum run approximately 3.39 and only about 0.88% of sampled views exceeding six bases, which did not explain the much stronger collapse during generation. In a controlled experiment using constant probabilities `[A=0.25, U=0.23, C=0.24, G=0.28]`, sampled-confidence selection increased the generated G fraction from about 28.6% in one pass to 65.7% at four steps and 88.5% at sixteen steps. This identifies a decoding mechanism that can amplify bias without requiring a biased training dataset. It does not rule out all data-related limitations.
 
 Random-position selection removes this particular selection preference; it does not turn iterative masked generation into an exact joint-sequence sampler. Disabling self-conditioning was a conservative configuration decision, not an isolated demonstration that self-conditioning caused the original failure.
-

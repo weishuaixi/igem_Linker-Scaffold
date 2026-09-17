@@ -20,7 +20,7 @@ Use a new output directory for each run. The formal benchmark accepts `--resume`
 
 ## Benchmark results and interpretation
 
-The following exploratory results are transcribed from development-stage server reports. Checkpoint identities and their evaluation records are listed under “Final model identity”.
+The following exploratory results are transcribed from development-stage server reports. See [model identity](provenance.md) for checkpoint hashes and evidence status.
 
 ### V4: passing format checks was insufficient
 
@@ -85,4 +85,3 @@ Paired differences below are `alternative NLL − model/correct NLL`; positive v
 | Uniform minus model/correct | 0.022291 | [0.009267, 0.036518] |
 
 This supports a modest conditioning effect in the evaluated validation sample. Validation was reused for model selection and exploratory analysis; there was one ablation draw per context and several comparisons. The result is not an independent held-out confirmation and does not isolate long-range structural learning. Generation diversity and masked-token NLL answer different questions; neither table supersedes the other.
-
