@@ -1,14 +1,13 @@
 # RNA-Linker
 
-RNA-Linker is the dry-lab RNA linker and scaffold sequence generator for **iGEM PekingHSC 2026** (HEPHA-RNA). Given a fixed RNA motif, it proposes flanking sequences for Hepha element development. An optional RNAfold workflow predicts secondary structures and ranks the generated candidates.
+RNA-Linker is the dry-lab RNA linker and scaffold sequence generator for iGEM PekingHSC 2026 (HEPHA-RNA). It generates RNA sequences around a fixed motif, with an optional RNAfold workflow for secondary-structure prediction and candidate ranking.
 
-- Model repository: [PekingHSC-2026-Model](https://github.com/sebaWEI/PekingHSC-2026-Model)
-- Team: [iGEM PekingHSC 2026](https://teams.igem.org/6371)
-- Wiki: [PekingHSC wiki](https://2026.igem.wiki/pekinghsc/)
-- Wiki model page: [Models](https://2026.igem.wiki/pekinghsc/model)
-- Wiki tutorial page: [Documents](https://2026.igem.wiki/pekinghsc/documents)
-
-Each ranked-generation run writes candidates, RNAfold predictions, ranking scores, and a run manifest to the selected output directory, such as `outputs/GCGG_ranked/`. Computational ranking supports candidate selection but still requires wet-lab validation; see [scope and limitations](#scope-and-limitations).
+- Source repository: https://github.com/weishuaixi/igem_Linker-Scaffold
+- Team model repository: https://github.com/sebaWEI/PekingHSC-2026-Model
+- Team: https://teams.igem.org/6371
+- Wiki: https://2026.igem.wiki/pekinghsc/
+- Model page: https://2026.igem.wiki/pekinghsc/model
+- Tutorial page: https://2026.igem.wiki/pekinghsc/documents
 
 You provide a motif such as `GCGG`. The model generates both flanking sequences while keeping the motif unchanged:
 
@@ -27,17 +26,52 @@ The following workflow generates a candidate pool, predicts secondary structures
 
 ### 1. Prepare source code and weights
 
-Clone this repository or extract the source archive. Run all commands from the directory containing this README. Obtain `RNA-MODEL-ASSETS.zip` from the repository's Releases if available, or request it from the maintainer. Source code alone does not include the weights.
+Source code does not contain model weights. Two separate files are required: the trained RNA-Linker checkpoint and the upstream RNA-FM pretrained checkpoint. No extraction is needed when downloading the raw files.
 
-Extract the asset ZIP into the repository root, not a nested subdirectory. Check that these files exist:
+```bash
+git clone https://github.com/weishuaixi/igem_Linker-Scaffold.git
+cd igem_Linker-Scaffold
+mkdir -p checkpoints_scaffold_linker_v5 .cache/torch/hub/checkpoints
+```
+
+Run all remaining commands from this repository root.
+
+**RNA-Linker checkpoint:** download the raw checkpoint from the published [model-weights-1.0 release](https://github.com/weishuaixi/igem_Linker-Scaffold/releases/tag/model-weights-1.0). No extraction is required. Run:
+
+```bash
+curl --fail --location --retry 5 --continue-at - \
+  'https://github.com/weishuaixi/igem_Linker-Scaffold/releases/download/model-weights-1.0/rna-linker-v5-34-1.3714.ckpt' \
+  --output checkpoints_scaffold_linker_v5/rna-linker-v5-34-1.3714.ckpt
+```
+
+Alternatively, use the [direct checkpoint download](https://github.com/weishuaixi/igem_Linker-Scaffold/releases/download/model-weights-1.0/rna-linker-v5-34-1.3714.ckpt) in a browser and save the file in `checkpoints_scaffold_linker_v5/`. The release's automatically generated **Source code** archives do not contain the weights. Source code and RNA-FM alone are not sufficient to run this model.
+
+**RNA-FM checkpoint:** download directly from the [Hugging Face repository linked by the RNA-FM authors](https://huggingface.co/cuhkaih/rnafm/tree/main). This project does not need to rehost the upstream file. Use `RNA-FM_pretrained.pth`, not the mRNA-FM or secondary-structure model:
+
+```bash
+curl --fail --location --retry 5 --continue-at - \
+  'https://huggingface.co/cuhkaih/rnafm/resolve/main/RNA-FM_pretrained.pth?download=true' \
+  --output .cache/torch/hub/checkpoints/RNA-FM_pretrained.pth
+```
+
+If the server cannot reach Hugging Face, download the same file through a browser on another computer and transfer it to the exact path above. Do not bypass TLS verification. See the [upstream project](https://github.com/ml4bio/RNA-FM) for attribution and license information.
+
+Verify both files before running inference. These hashes identify the expected delivery weights:
+
+```bash
+printf '%s\n' \
+  '2a6bab7bfb4afc145c2309c38798e2db43f085d628c291ab4004b33932546ced  checkpoints_scaffold_linker_v5/rna-linker-v5-34-1.3714.ckpt' \
+  '5b5d7d87b37c291ef42c140ef9edf7aea29f255fa2a4fd435f776c52e93d5e99  .cache/torch/hub/checkpoints/RNA-FM_pretrained.pth' \
+  | sha256sum -c -
+```
+
+Both lines must report `OK`. If either fails, stop and check the download and file identity. The RNA-Linker checkpoint is 533,679,315 bytes; RNA-FM is 1,194,424,423 bytes. Required inference files:
 
 ```text
 checkpoints_scaffold_linker_v5/
   rna-linker-v5-34-1.3714.ckpt
-  training_manifest.json
 .cache/torch/hub/checkpoints/
   RNA-FM_pretrained.pth
-MODEL_ASSETS_MANIFEST.json
 ```
 
 Keep these filenames as supplied: the scripts use these paths. Their historical suffixes are compatibility identifiers, not extra versions you need to install. See [model identity](docs/provenance.md) for weight hashes and evaluation provenance.
@@ -165,7 +199,7 @@ The evidence supports some use of motif context. It does not establish functiona
 
 Training uses natural RNA sequence segments from a locally prepared Stanford RNA collection, not experimentally validated synthetic linker labels. Filtering retained 3,442 records. Cluster-disjoint splits contain 2,869 training, 252 validation, and 321 test records.
 
-Training data are not included in the source or inference asset archive. Follow [training and data preparation](docs/training.md) for required files, hashes, environment setup, and commands. Retrain in a separate working copy; do not delete the supplied weights to bypass overwrite protection.
+Training data are not included in the source repository or checkpoint release. Follow [training and data preparation](docs/training.md) for required files, hashes, environment setup, and commands. Retrain in a separate working copy; do not delete the supplied weights to bypass overwrite protection.
 
 With the required data, environment, and weights available, run the benchmark from the repository root:
 
